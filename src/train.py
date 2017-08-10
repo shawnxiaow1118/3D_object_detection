@@ -87,7 +87,7 @@ def train():
         cv2.waitKey(1)
 
     anchors, inside_inds =  make_anchors(bases, stride, top_shape[0:2], top_feature_shape[0:2])
-    inside_inds = np.arange(0,len(anchors),dtype=np.int32) 
+    # inside_inds = np.arange(0,len(anchors),dtype=np.int32) 
 
 
 
@@ -100,6 +100,9 @@ def train():
     top_rois     = tf.placeholder(shape=[None, 5], dtype=tf.float32,   name ='top_rois'   ) #<todo> change to int32???
     front_rois   = tf.placeholder(shape=[None, 5], dtype=tf.float32,   name ='front_rois' )
     rgb_rois     = tf.placeholder(shape=[None, 5], dtype=tf.float32,   name ='rgb_rois'   )
+
+
+    # rpn_scores, rpn_probs, rpn_ deltas = rpn()
 
     top_features, top_scores, top_probs, top_deltas, proposals, proposal_scores = \
         top_feature_net(top_images, top_anchors, top_inside_inds, num_bases)
@@ -126,6 +129,7 @@ def train():
     fuse_labels  = tf.placeholder(shape=[None            ], dtype=tf.int32,   name='fuse_label' )
     fuse_targets = tf.placeholder(shape=[None, *out_shape], dtype=tf.float32, name='fuse_target')
     fuse_cls_loss, fuse_reg_loss = rcnn_loss(fuse_scores, fuse_deltas, fuse_labels, fuse_targets)
+    rgb_reg_loss = rgb_loss(rgb_scores, rgb_deltas, rgb_labels, rgb_targets)
 
 
     #solver
@@ -162,7 +166,7 @@ def train():
 
 
             ## generate train image -------------
-            idx = np.random.choice(num_frames)     #*10   #num_frames)  #0
+            # idx = np.random.choice(num_frames)     #*10   #num_frames)  #0
             batch_top_images    = tops[idx].reshape(1,*top_shape)
             batch_front_images  = fronts[idx].reshape(1,*front_shape)
             batch_rgb_images    = rgbs[idx].reshape(1,*rgb_shape)
@@ -191,32 +195,32 @@ def train():
                  rcnn_target(  batch_proposals, batch_gt_labels, batch_gt_top_boxes, batch_gt_boxes3d )
 
             batch_rois3d	 = project_to_roi3d    (batch_top_rois)
-            batch_front_rois = project_to_front_roi(batch_rois3d  )
+            # batch_front_rois = project_to_front_roi(batch_rois3d  )
             batch_rgb_rois   = project_to_rgb_roi  (batch_rois3d  )
 
 
             ##debug gt generation
-            if 1 and iter%iter_debug==0:
-                top_image = top_imgs[idx]
-                rgb       = rgbs[idx]
+            # if 1 and iter%iter_debug==0:
+            #     top_image = top_imgs[idx]
+            #     rgb       = rgbs[idx]
 
-                img_gt     = draw_rpn_gt(top_image, batch_gt_top_boxes, batch_gt_labels)
-                img_label  = draw_rpn_labels (top_image, anchors, batch_top_inds, batch_top_labels )
-                img_target = draw_rpn_targets(top_image, anchors, batch_top_pos_inds, batch_top_targets)
-                #imshow('img_rpn_gt',img_gt)
-                #imshow('img_rpn_label',img_label)
-                #imshow('img_rpn_target',img_target)
+            #     img_gt     = draw_rpn_gt(top_image, batch_gt_top_boxes, batch_gt_labels)
+            #     img_label  = draw_rpn_labels (top_image, anchors, batch_top_inds, batch_top_labels )
+            #     img_target = draw_rpn_targets(top_image, anchors, batch_top_pos_inds, batch_top_targets)
+            #     #imshow('img_rpn_gt',img_gt)
+            #     #imshow('img_rpn_label',img_label)
+            #     #imshow('img_rpn_target',img_target)
 
-                img_label  = draw_rcnn_labels (top_image, batch_top_rois, batch_fuse_labels )
-                img_target = draw_rcnn_targets(top_image, batch_top_rois, batch_fuse_labels, batch_fuse_targets)
-                #imshow('img_rcnn_label',img_label)
-                imshow('img_rcnn_target',img_target)
+            #     img_label  = draw_rcnn_labels (top_image, batch_top_rois, batch_fuse_labels )
+            #     img_target = draw_rcnn_targets(top_image, batch_top_rois, batch_fuse_labels, batch_fuse_targets)
+            #     #imshow('img_rcnn_label',img_label)
+            #     imshow('img_rcnn_target',img_target)
 
 
-                img_rgb_rois = draw_boxes(rgb, batch_rgb_rois[:,1:5], color=(255,0,255), thickness=1)
-                imshow('img_rgb_rois',img_rgb_rois)
+            #     img_rgb_rois = draw_boxes(rgb, batch_rgb_rois[:,1:5], color=(255,0,255), thickness=1)
+            #     imshow('img_rgb_rois',img_rgb_rois)
 
-                cv2.waitKey(1)
+            #     cv2.waitKey(1)
 
             ## run classification and regression loss -----------
             fd2={
